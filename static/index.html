@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Web Jigsaw Puzzle</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 30px 20px;
+            background: linear-gradient(180deg, #eef2f5 0%, #f7f9fa 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.2em;
+            color: #2c3e50;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            margin: 6px 0 0 0;
+            color: #7a8a99;
+            font-size: 14px;
+        }
+
+        .toolbar-card {
+            width: 95%;
+            max-width: 1100px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 24px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            flex: 1 1 auto;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-group label {
+            font-size: 13px;
+            color: #7a8a99;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .control-group input {
+            border: 1px solid #dbe2e8;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #canvas-container {
+            width: 95%;
+            max-width: 1100px;
+            background: white;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            font-size: 16px;
+            color: #7a8a99;
+            margin-bottom: 16px;
+        }
+
+        .instructions {
+            margin-bottom: 14px;
+            color: #7a8a99;
+            font-size: 14px;
+            display: none;
+        }
+
+        #evaluateBtn {
+            display: none;
+            margin-bottom: 16px;
+            background-color: #2196F3;
+        }
+
+        #evaluateBtn:hover {
+            background-color: #1976D2;
+        }
+
+        #reference-panel {
+            display: none;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 14px;
+            padding-left: 28px;
+            margin-left: auto;
+            border-left: 1px solid #eef0f2;
+        }
+
+        #reference-panel .reference-label {
+            font-size: 12px;
+            color: #7a8a99;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+
+        #reference-panel img {
+            display: block;
+            height: 90px;
+            width: auto;
+            border-radius: 8px;
+            cursor: zoom-in;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: transform 0.15s ease;
+        }
+
+        #reference-panel img:hover {
+            transform: scale(1.05);
+        }
+
+        #lightbox-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(20,25,30,0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            cursor: zoom-out;
+        }
+
+        #lightbox-overlay.visible {
+            display: flex;
+        }
+
+        #lightbox-overlay img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 10px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+        }
+
+        #result-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        #result-overlay.visible {
+            display: flex;
+        }
+
+        #result-modal {
+            background: white;
+            border-radius: 14px;
+            padding: 34px 38px;
+            text-align: center;
+            max-width: 340px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        #result-emoji {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        #result-title {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        #result-score {
+            font-size: 40px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        #result-message {
+            color: #5c6b78;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 22px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🧩 Jigsaw Puzzle Forge</h1>
+        <p>Upload a photo, scatter the pieces, and solve it interactively.</p>
+    </header>
+
+    <div class="toolbar-card">
+        <div class="controls">
+            <div class="control-group">
+                <label for="imageUpload">Upload Image</label>
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="rows">Rows</label>
+                <input type="number" id="rows" value="4" min="2" max="20">
+            </div>
+
+            <div class="control-group">
+                <label for="cols">Columns</label>
+                <input type="number" id="cols" value="4" min="2" max="20">
+            </div>
+
+            <button id="generateBtn">Generate Puzzle</button>
+        </div>
+
+        <div id="reference-panel">
+            <span class="reference-label">Reference<br>(click to enlarge)</span>
+            <img id="referenceImage" src="" alt="Original reference">
+        </div>
+    </div>
+
+    <div class="loading" id="loading">Generating puzzle pieces, please wait...</div>
+
+    <div class="instructions" id="instructions">
+        <strong>Controls:</strong> Drag pieces to move them. Select a piece and use the rotation handle to rotate it.
+    </div>
+
+    <button id="evaluateBtn">🎯 Rate My Puzzle</button>
+
+    <div id="canvas-container">
+        <canvas id="puzzleCanvas"></canvas>
+    </div>
+
+    <div id="lightbox-overlay">
+        <img id="lightboxImage" src="" alt="Reference full size">
+    </div>
+
+    <div id="result-overlay">
+        <div id="result-modal">
+            <div id="result-emoji">🎉</div>
+            <h2 id="result-title"></h2>
+            <div id="result-score"></div>
+            <p id="result-message"></p>
+            <button id="closeResultBtn">Close</button>
+        </div>
+    </div>
+
+    <!-- Load Fabric.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
